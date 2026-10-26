@@ -52,3 +52,15 @@ export async function updateTaskHandlingMode(input: unknown) {
 
   revalidatePath("/");
 }
+
+export async function updateTaskHandlingModeFromForm(formData: FormData) {
+  await updateTaskHandlingMode({
+    householdId: formData.get("householdId"),
+    taskId: formData.get("taskId"),
+    mode: formData.get("mode"),
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/tasks");
+  revalidatePath(`/tasks/${formData.get("taskId")}`);
+}

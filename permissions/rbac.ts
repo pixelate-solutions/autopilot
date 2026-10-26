@@ -47,6 +47,9 @@ export async function requireTenant(requiredRole: UserRole = "customer"): Promis
 }
 
 export function assertSameHousehold(ctx: TenantContext, householdId: string) {
+  if (ctx.role === "owner" || ctx.role === "admin") {
+    return;
+  }
   if (ctx.householdId !== householdId) {
     throw new Error("Cross-tenant access denied.");
   }

@@ -28,7 +28,22 @@ export async function evaluateAutopilotCapability(input: {
     .limit(1);
 
   if (!capability) {
-    return { enabled: false, reason: "Service is not available for this household yet." };
+    const [technician] = await db
+      .select()
+      .from(technicians)
+      .where(eq(technicians.active, true))
+      .then((rows) => rows.filter((tech) => tech.serviceTypes.includes(serviceType)))
+      .then((rows) => rows.slice(0, 1));
+
+    if (technician) {
+      return {
+        enabled: true,
+        assignmentType: "technician",
+        assigneeId: technician.id,
+      };
+    }
+
+    return { enabled: false, reason: "Service is not available yet." };
   }
 
   const covered = capability.coverageZipPrefixes.some((prefix) => household.zip.startsWith(prefix));

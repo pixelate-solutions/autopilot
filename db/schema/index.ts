@@ -22,6 +22,7 @@ export const handlingMode = pgEnum("handling_mode", ["NOTIFY", "GUIDE", "AUTOPIL
 export const memoryType = pgEnum("memory_type", ["household_fact", "preference", "behavior", "conversation", "aggregated_pattern"]);
 export const jobStatus = pgEnum("job_status", ["draft", "estimate_pending", "approval_required", "scheduled", "assigned", "in_progress", "completed", "cancelled"]);
 export const paymentStatus = pgEnum("payment_status", ["not_required", "estimate", "authorized", "deposit_paid", "paid", "failed", "refunded"]);
+export const ticketStatus = pgEnum("ticket_status", ["open", "waiting_on_customer", "waiting_on_team", "resolved", "closed"]);
 
 export const households = pgTable("households", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -35,6 +36,7 @@ export const households = pgTable("households", {
   hasVehicles: boolean("has_vehicles").notNull().default(false),
   automationPreference: text("automation_preference").notNull(),
   autoApprovalLimitCents: integer("auto_approval_limit_cents").notNull().default(15000),
+  customerAvailability: jsonb("customer_availability").$type<Record<string, unknown>[]>().notNull().default([]),
   subscriptionTier: subscriptionTier("subscription_tier").notNull().default("guided"),
   stripeCustomerId: text("stripe_customer_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -122,7 +124,7 @@ export const technicians = pgTable("technicians", {
   certifications: jsonb("certifications").$type<string[]>().notNull().default([]),
   homeBaseZip: text("home_base_zip").notNull(),
   geoRadiusMiles: integer("geo_radius_miles").notNull(),
-  availability: jsonb("availability").$type<Record<string, unknown>>().notNull().default({}),
+  availability: jsonb("availability").$type<Record<string, unknown>[]>().notNull().default([]),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
@@ -149,7 +151,7 @@ export const serviceCapabilities = pgTable("service_capabilities", {
 export const jobs = pgTable("jobs", {
   id: uuid("id").primaryKey().defaultRandom(),
   householdId: uuid("household_id").notNull().references(() => households.id, { onDelete: "cascade" }),
-  taskId: uuid("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+  taskId: uuid("task_id").references(() => tasks.id, { onDelete: "cascade" }),
   status: jobStatus("status").notNull().default("draft"),
   serviceType: text("service_type").notNull(),
   estimateCents: integer("estimate_cents").notNull().default(0),
@@ -166,6 +168,37 @@ export const jobs = pgTable("jobs", {
 }, (table) => ({
   tenantStatusIdx: index("jobs_household_status_idx").on(table.householdId, table.status),
   tenantTaskIdx: index("jobs_household_task_idx").on(table.householdId, table.taskId),
+}));
+
+export const tickets = pgTable("tickets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  householdId: uuid("household_id").notNull().references(() => households.id, { onDelete: "cascade" }),
+  createdByUserId: uuid("created_by_user_id").references(() => users.id),
+  assignedUserId: uuid("assigned_user_id").references(() => users.id),
+  status: ticketStatus("status").notNull().default("open"),
+  subject: text("subject").notNull(),
+  category: text("category").notNull().default("general"),
+  customerAvailability: jsonb("customer_availability").$type<Record<string, unknown>[]>().notNull().default([]),
+  externalEmailId: text("external_email_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  tenantStatusIdx: index("tickets_household_status_idx").on(table.householdId, table.status),
+  tenantCreatedIdx: index("tickets_household_created_idx").on(table.householdId, table.createdAt),
+}));
+
+export const ticketMessages = pgTable("ticket_messages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ticketId: uuid("ticket_id").notNull().references(() => tickets.id, { onDelete: "cascade" }),
+  householdId: uuid("household_id").notNull().references(() => households.id, { onDelete: "cascade" }),
+  authorUserId: uuid("author_user_id").references(() => users.id),
+  authorType: text("author_type").notNull(),
+  body: text("body").notNull(),
+  externalEmailId: text("external_email_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  ticketIdx: index("ticket_messages_ticket_idx").on(table.ticketId, table.createdAt),
+  tenantIdx: index("ticket_messages_household_idx").on(table.householdId),
 }));
 
 export const aiMemories = pgTable("ai_memories", {

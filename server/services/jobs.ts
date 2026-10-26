@@ -5,6 +5,7 @@ import { jobRequestSchema } from "@/lib/validation";
 import { evaluateAutopilotCapability } from "@/server/services/capabilities";
 import { generateEstimate } from "@/server/services/pricing";
 import { paymentRuleForEstimate } from "@/server/services/payments";
+import { findAutomaticAssignment } from "@/scheduling/assignment";
 
 export async function createAutopilotJobDraft(input: unknown) {
   const data = jobRequestSchema.parse(input);
@@ -35,6 +36,12 @@ export async function createAutopilotJobDraft(input: unknown) {
   const paymentRule = paymentRuleForEstimate(estimate.estimateCents);
   const underAutoApproval = estimate.estimateCents <= household.autoApprovalLimitCents;
   const approvalRequired = paymentRule !== "auto_charge" || !underAutoApproval;
+  const assignment = await findAutomaticAssignment({
+    householdId: data.householdId,
+    serviceType: task.serviceType,
+    requestedWindowStart: data.requestedWindowStart,
+    requestedWindowEnd: data.requestedWindowEnd,
+  });
 
   const [job] = await db
     .insert(jobs)
@@ -44,12 +51,13 @@ export async function createAutopilotJobDraft(input: unknown) {
       serviceType: task.serviceType,
       estimateCents: estimate.estimateCents,
       approvalRequired,
-      status: approvalRequired ? "approval_required" : "scheduled",
+      status: approvalRequired ? "approval_required" : assignment ? "scheduled" : "estimate_pending",
       paymentStatus: "estimate",
-      assignedTechnicianId: capability.assignmentType === "technician" ? capability.assigneeId : undefined,
+      assignedTechnicianId: assignment?.technician.id ?? (capability.assignmentType === "technician" ? capability.assigneeId : undefined),
       assignedVendorId: capability.assignmentType === "vendor" ? capability.assigneeId : undefined,
-      scheduledStart: approvalRequired ? null : data.requestedWindowStart ?? new Date(Date.now() + 48 * 60 * 60 * 1000),
-      scheduledEnd: approvalRequired ? null : data.requestedWindowEnd ?? new Date(Date.now() + 50 * 60 * 60 * 1000),
+      scheduledStart: approvalRequired ? null : assignment?.scheduledStart ?? null,
+      scheduledEnd: approvalRequired ? null : assignment?.scheduledEnd ?? null,
+      notes: assignment ? "Automatically assigned from customer and technician availability." : "No matching schedule window was found automatically.",
     })
     .returning();
 

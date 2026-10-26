@@ -24,3 +24,16 @@ export async function triggerAutopilotJob(input: unknown) {
   revalidatePath("/");
   return result;
 }
+
+export async function triggerAutopilotJobFromForm(formData: FormData) {
+  await triggerAutopilotJob({
+    householdId: formData.get("householdId"),
+    taskId: formData.get("taskId"),
+    requestedWindowStart: formData.get("requestedWindowStart") || undefined,
+    requestedWindowEnd: formData.get("requestedWindowEnd") || undefined,
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/tasks");
+  revalidatePath("/calendar");
+}

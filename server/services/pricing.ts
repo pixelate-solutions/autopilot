@@ -30,7 +30,17 @@ export async function generateEstimate(input: {
     .limit(1);
 
   if (!capability) {
-    throw new Error("Cannot estimate without a matching service capability.");
+    const hours = taskHourDefaults[input.serviceType] ?? 1.5;
+    const hourlyRateCents = 9500;
+    const baseTripFeeCents = 6500;
+    const labor = Math.round(hours * hourlyRateCents);
+    return {
+      estimateCents: baseTripFeeCents + labor,
+      laborCents: labor,
+      materialsCents: 0,
+      tripFeeCents: baseTripFeeCents,
+      markupPct: 0.25,
+    };
   }
 
   const hours = taskHourDefaults[input.serviceType] ?? 1.5;

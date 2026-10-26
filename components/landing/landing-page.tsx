@@ -2,19 +2,17 @@
 
 import { useRef } from "react";
 import Link from "next/link";
+import { SignInButton, SignUpButton } from "@clerk/nextjs";
 import { motion, useInView } from "framer-motion";
 import {
   Zap,
   Calendar,
   Wrench,
-  Bot,
+  LifeBuoy,
   Shield,
   Clock,
   BriefcaseBusiness,
-  ArrowRight,
   Database,
-  Cpu,
-  CheckCircle,
 } from "lucide-react";
 
 /* ── Animation helpers ── */
@@ -95,12 +93,16 @@ function Nav() {
       </div>
 
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-        <Link href="/dashboard" style={{ padding: "7px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, color: "rgba(245,244,240,0.7)", border: "1px solid rgba(255,255,255,0.12)", background: "transparent", transition: "all .15s" }}>
-          Sign in
-        </Link>
-        <Link href="/dashboard" style={{ padding: "8px 20px", borderRadius: 8, fontSize: 13, fontWeight: 600, background: "#0f6175", color: "white", border: "none", transition: "all .15s" }}>
-          Get started →
-        </Link>
+        <SignInButton mode="modal" forceRedirectUrl="/dashboard">
+          <button style={{ padding: "7px 16px", borderRadius: 8, fontSize: 13, fontWeight: 500, color: "rgba(245,244,240,0.7)", border: "1px solid rgba(255,255,255,0.12)", background: "transparent", transition: "all .15s", cursor: "pointer" }}>
+            Sign in
+          </button>
+        </SignInButton>
+        <SignUpButton mode="modal" forceRedirectUrl="/onboarding">
+          <button style={{ padding: "8px 20px", borderRadius: 8, fontSize: 13, fontWeight: 600, background: "#0f6175", color: "white", border: "none", transition: "all .15s", cursor: "pointer" }}>
+            Get started →
+          </button>
+        </SignUpButton>
       </div>
     </nav>
   );
@@ -168,14 +170,16 @@ function Hero() {
           </p>
 
           <div style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "center", flexWrap: "wrap", marginBottom: 28 }}>
-            <Link href="/dashboard" style={{
+            <SignUpButton mode="modal" forceRedirectUrl="/onboarding">
+            <button style={{
               padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 600, background: "#f4b860",
               color: "#1a1000", border: "none", display: "inline-flex", alignItems: "center", gap: 8,
-              transition: "all .2s", boxShadow: "0 4px 20px rgba(244,184,96,0.25)",
+              transition: "all .2s", boxShadow: "0 4px 20px rgba(244,184,96,0.25)", cursor: "pointer",
             }}>
               <Zap size={16} />
               Start for free
-            </Link>
+            </button>
+            </SignUpButton>
             <a href="#how" style={{
               padding: "13px 28px", borderRadius: 10, fontSize: 14, fontWeight: 600, background: "#0f6175",
               color: "white", border: "none", display: "inline-flex", alignItems: "center", gap: 8, transition: "all .2s",
@@ -242,7 +246,7 @@ function AppMockup() {
               <div style={{ fontSize: 9, color: "#66635c" }}>Household OS</div>
             </div>
           </div>
-          {[["Dashboard", true], ["Tasks", false], ["Calendar", false], ["Assistant", false], ["Settings", false]].map(([label, active]) => (
+          {[["Dashboard", true], ["Tasks", false], ["Calendar", false], ["Tickets", false], ["Settings", false]].map(([label, active]) => (
             <div key={label as string} style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 8px", borderRadius: 6, fontSize: 11, background: active ? "#eeece5" : "transparent", color: active ? "#1b1b18" : "#66635c", fontWeight: active ? 600 : 400 }}>
               <div style={{ width: 12, height: 12, borderRadius: 3, background: active ? "#0f6175" : "#d9d5ca", opacity: active ? 0.8 : 1 }} />
               {label}
@@ -368,7 +372,7 @@ function Features() {
   const features = [
     { icon: Calendar, title: "Smart scheduling", desc: "Tasks timed around weather, seasons, and your routine. Rain coming? Outdoor work moves automatically." },
     { icon: Wrench, title: "Vetted vendors", desc: "Licensed, background-checked technicians booked in your area — only when work requires it." },
-    { icon: Bot, title: "AI assistant", desc: "Ask anything about your home. Context-aware answers from your household's history — not generic advice." },
+    { icon: LifeBuoy, title: "Ticket support", desc: "Submit requests, share availability, and keep every team reply in one accountable thread." },
     { icon: Shield, title: "Approval controls", desc: "Set an auto-approval limit. Jobs under your threshold happen without friction. Over it — you review first." },
     { icon: Zap, title: "Learning signals", desc: "Every approval, deferral, and preference shapes future decisions. Autopilot gets smarter the longer you use it." },
     { icon: Clock, title: "Full home history", desc: "Every task completed, every job booked, every cost recorded. Your home's maintenance history, always at hand." },
@@ -545,14 +549,16 @@ function CTA() {
           <p style={{ fontSize: 16, color: "rgba(245,244,240,0.6)", maxWidth: 440, margin: "0 auto 36px", lineHeight: 1.6 }}>
             Setup takes under 2 minutes. No credit card required. Cancel any time.
           </p>
-          <Link href="/dashboard" style={{
+          <SignUpButton mode="modal" forceRedirectUrl="/onboarding">
+          <button style={{
             padding: "14px 32px", borderRadius: 10, fontSize: 15, fontWeight: 600, background: "#f4b860",
             color: "#1a1000", border: "none", display: "inline-flex", alignItems: "center", gap: 8,
-            transition: "all .2s",
+            transition: "all .2s", cursor: "pointer",
           }}>
             <Zap size={16} />
             Create your household plan
-          </Link>
+          </button>
+          </SignUpButton>
         </Reveal>
       </div>
     </section>

@@ -1,8 +1,12 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { requirePageContext } from "@/permissions/page-context";
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const { user } = await requirePageContext();
+  if (user.role !== "owner" && user.role !== "admin") redirect("/dashboard");
   const areas = [
     ["Jobs", "/admin/jobs"],
     ["Technicians", "/admin/technicians"],

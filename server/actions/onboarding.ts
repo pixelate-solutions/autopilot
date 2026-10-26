@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { addDays } from "date-fns";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db";
@@ -9,10 +9,14 @@ import { generateHouseholdPlan } from "@/ai/planner";
 import { createMemory } from "@/memory";
 import { onboardingSchema } from "@/lib/validation";
 import { encryptSensitive } from "@/server/services/encryption";
+import { roleForEmail } from "@/permissions/roles";
 
 export async function completeOnboarding(formData: FormData) {
   const session = await auth();
   if (!session.userId) throw new Error("Authentication required.");
+  const clerkUser = await currentUser();
+  const email = clerkUser?.primaryEmailAddress?.emailAddress ?? "customer@example.com";
+  const name = clerkUser?.fullName ?? clerkUser?.firstName ?? email.split("@")[0] ?? "Customer";
 
   const parsed = onboardingSchema.parse({
     address: formData.get("address")?.toString() || undefined,
@@ -44,9 +48,9 @@ export async function completeOnboarding(formData: FormData) {
   await db.insert(users).values({
     householdId: household.id,
     clerkUserId: session.userId,
-    email: session.sessionClaims?.email as string ?? "customer@example.com",
-    name: session.sessionClaims?.name as string ?? "Customer",
-    role: "owner",
+    email,
+    name,
+    role: roleForEmail(email),
   });
 
   const plan = await generateHouseholdPlan(household.id, parsed);

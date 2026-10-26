@@ -82,6 +82,63 @@ export const jobRequestSchema = z.object({
   requestedWindowEnd: z.coerce.date().optional(),
 });
 
+export const availabilityWindowSchema = z.object({
+  day: z.enum(["sun", "mon", "tue", "wed", "thu", "fri", "sat"]),
+  start: z.string().regex(/^\d{2}:\d{2}$/),
+  end: z.string().regex(/^\d{2}:\d{2}$/),
+});
+
+export const settingsUpdateSchema = z.object({
+  householdId: householdIdSchema,
+  householdName: z.string().trim().min(2).max(120),
+  automationPreference: z.enum(["mostly_notify", "guide_me", "autopilot_when_safe"]),
+  autoApprovalLimitCents: z.coerce.number().int().min(0).max(500000),
+  customerAvailability: z.array(availabilityWindowSchema).min(1).max(14),
+});
+
+export const ticketCreateSchema = z.object({
+  householdId: householdIdSchema,
+  subject: z.string().trim().min(4).max(140),
+  category: z.string().trim().min(2).max(80),
+  body: z.string().trim().min(12).max(5000),
+  customerAvailability: z.array(availabilityWindowSchema).max(14).default([]),
+});
+
+export const ticketReplySchema = z.object({
+  householdId: householdIdSchema,
+  ticketId: uuidSchema,
+  body: z.string().trim().min(2).max(5000),
+  status: z.enum(["open", "waiting_on_customer", "waiting_on_team", "resolved", "closed"]).optional(),
+});
+
+export const employeeRoleUpdateSchema = z.object({
+  householdId: householdIdSchema,
+  userId: uuidSchema,
+  role: z.enum(["customer", "technician", "admin"]),
+});
+
+export const technicianUpdateSchema = z.object({
+  householdId: householdIdSchema,
+  technicianId: uuidSchema.optional(),
+  userId: uuidSchema.optional(),
+  name: z.string().trim().min(2).max(120),
+  email: z.string().trim().email(),
+  serviceTypes: z.array(z.string().trim().min(2).max(80)).min(1).max(12),
+  homeBaseZip: z.string().trim().regex(/^\d{5}$/),
+  geoRadiusMiles: z.coerce.number().int().min(1).max(120),
+  availability: z.array(availabilityWindowSchema).min(1).max(21),
+  active: z.boolean().default(true),
+});
+
+export const jobAssignmentSchema = z.object({
+  householdId: householdIdSchema,
+  jobId: uuidSchema,
+  technicianId: uuidSchema.optional(),
+  scheduledStart: z.coerce.date().optional(),
+  scheduledEnd: z.coerce.date().optional(),
+  status: jobStatusSchema.optional(),
+});
+
 export const feedbackSchema = z.object({
   householdId: householdIdSchema,
   taskId: uuidSchema.optional(),
